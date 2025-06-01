@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+
+# VSCode
+.vscode/
+
+# AWS & Secrets
+config.py
+.env
+
+# MacOS Files
+.DS_Store
+
+# Node (for frontend later)
+node_modules/
+dist/
+build/
+
+# Virtual env
+venv/
