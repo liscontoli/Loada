@@ -3,9 +3,9 @@ from typing import Optional
 from datetime import datetime
 from uuid import uuid4
 import boto3
-from config import DYNAMODB_HISTORY_TABLE
+from config import DYNAMODB_HISTORY_TABLE, AWS_REGION
 
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 table = dynamodb.Table(DYNAMODB_HISTORY_TABLE)
 
 class HistoryEntry(BaseModel):

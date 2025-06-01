@@ -1,82 +1,96 @@
-import requests
-from pydantic import BaseModel
+import os
+from decimal import Decimal
+from models.history import save_history_entry
+from utils.fuel_price import get_fuel_price_by_state
+from utils.location_utils import get_state_from_coordinates
+from utils.miles import get_deadhead_miles, get_load_miles
+from utils.market_rate import get_mock_market_rate
+from services.negotiation_ai import negotiate_load
+from utils.type_utils import convert_floats_to_decimal
 
-# Google APIs
-GOOGLE_MAPS_API_KEY = "GOOGLE_API_KEY"
-GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
-DISTANCE_MATRIX_URL = "https://maps.googleapis.com/maps/api/distancematrix/json"
+def calculate_load_costs(data: dict, user_id: str):
+    try:
+        # Validate required fields
+        required_fields = [
+            "current_lat", "current_lng", "pickup_location", "dropoff_location",
+            "truck_mpg", "load_weight", "load_miles", "deadhead_miles",
+            "load_type", "broker_offer"
+        ]
+        for field in required_fields:
+            if field not in data:
+                return {"error": f"'{field}' is missing from request."}
 
-# EIA Fuel API
-EIA_API_KEY = "EIA_API_KEY"
-EIA_FUEL_URL = "https://api.eia.gov/v2/petroleum/pri/gnd/data/?api_key={}&frequency=weekly&data[0]=value&facets[area][]=STATE_CODE&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1"
+        # Extract and convert input
+        current_lat = float(data["current_lat"])
+        current_lng = float(data["current_lng"])
+        pickup = data["pickup_location"]
+        dropoff = data["dropoff_location"]
+        mpg = float(data["truck_mpg"])
+        weight = float(data["load_weight"])
+        load_miles = float(data["load_miles"])
+        deadhead_miles = float(data["deadhead_miles"])
+        total_miles = round(load_miles + deadhead_miles, 2)
+        load_type = data.get("load_type", "dry van")
+        broker_offer = float(data["broker_offer"])
+        previous_offers = data.get("previous_offers", [])
 
-class LoadCalculationResult(BaseModel):
-    deadhead_miles: float
-    load_miles: float
-    total_miles: float
-    diesel_price: float
-    diesel_cost: float
-    market_rate_per_mile: float
-    market_total: float
-    profitability: str
+        # Step 1: Get state from coordinates
+        state = get_state_from_coordinates(current_lat, current_lng)
 
-def get_state_from_location(lat: float, lng: float):
-    params = {
-        "latlng": f"{lat},{lng}",
-        "key": GOOGLE_MAPS_API_KEY
-    }
-    response = requests.get(GEOCODE_URL, params=params)
-    results = response.json().get("results", [])
-    for component in results[0]["address_components"]:
-        if "administrative_area_level_1" in component["types"]:
-            return component["short_name"]
-    return None
+        # Step 2: Get diesel price for state with fallback
+        try:
+            diesel_price = get_fuel_price_by_state(state)
+        except Exception as e:
+            print(f"Error fetching fuel price for state {state}: {e}")
+            diesel_price = 4.5  # fallback mock value
 
-def get_diesel_price(state_code: str):
-    url = EIA_FUEL_URL.replace("STATE_CODE", state_code).format(EIA_API_KEY)
-    response = requests.get(url)
-    data = response.json()
-    return float(data["response"]["data"][0]["value"])
+        # Step 3: Calculate fuel cost
+        fuel_cost = round((total_miles / mpg) * diesel_price, 2)
 
-def get_miles(origin: str, destination: str):
-    params = {
-        "origins": origin,
-        "destinations": destination,
-        "key": GOOGLE_MAPS_API_KEY
-    }
-    response = requests.get(DISTANCE_MATRIX_URL, params=params)
-    elements = response.json()["rows"][0]["elements"][0]
-    return elements["distance"]["value"] / 1609.34  # convert meters to miles
+        # Step 4: Get market rate (mocked)
+        market_rate = get_mock_market_rate(load_type, pickup, dropoff)
 
-def calculate_load_info(current_location: str, pickup: str, dropoff: str, mpg: float, offer: float, load_type: str):
-    # Get distances
-    deadhead = get_miles(current_location, pickup)
-    load_miles = get_miles(pickup, dropoff)
-    total_miles = round(deadhead + load_miles, 2)
+        # Step 5: AI negotiation logic
+        ai = negotiate_load(
+            pickup_location=pickup,
+            dropoff_location=dropoff,
+            load_type=load_type,
+            weight=weight,
+            distance=total_miles,
+            broker_offer=broker_offer,
+            previous_offers=previous_offers
+        )
 
-    # Get diesel price
-    geo_resp = requests.get(GEOCODE_URL, params={"address": current_location, "key": GOOGLE_MAPS_API_KEY})
-    geo_data = geo_resp.json()
-    location = geo_data["results"][0]["geometry"]["location"]
-    state_code = get_state_from_location(location["lat"], location["lng"])
-    diesel_price = get_diesel_price(state_code)
+        # Step 6: Save load to history
+        save_history_entry(
+            user_id,
+            convert_floats_to_decimal({
+                "pickup": pickup,
+                "dropoff": dropoff,
+                "load_type": load_type,
+                "weight": weight,
+                "total_miles": total_miles,
+                "fuel_cost": fuel_cost,
+                "broker_offer": broker_offer,
+                "market_rate": market_rate,
+                "counter_offer": ai["suggested_counter_offer"]
+            })
+        )
 
-    # Diesel cost
-    diesel_cost = round((total_miles / mpg) * diesel_price, 2)
+        # Step 7: Return full response
+        response = {
+            "state": state,
+            "diesel_price": diesel_price,
+            "fuel_cost": fuel_cost,
+            "total_miles": total_miles,
+            "market_rate": market_rate,
+            "analysis": ai["analysis"],
+            "suggested_counter_offer": ai["suggested_counter_offer"],
+            "ai_reply": ai["ai_reply"]
+        }
 
-    # Simulate market rate
-    market_rate = 2.75
-    market_total = round(load_miles * market_rate, 2)
+        return convert_floats_to_decimal(response)
 
-    profitability = "Above Market" if offer >= market_total else "Below Market"
-
-    return LoadCalculationResult(
-        deadhead_miles=round(deadhead, 2),
-        load_miles=round(load_miles, 2),
-        total_miles=total_miles,
-        diesel_price=round(diesel_price, 2),
-        diesel_cost=diesel_cost,
-        market_rate_per_mile=market_rate,
-        market_total=market_total,
-        profitability=profitability
-    )
+    except Exception as e:
+        print("❌ Error in load logic:", e)
+        return {"error": str(e)}

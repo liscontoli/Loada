@@ -1,9 +1,15 @@
 from pydantic import BaseModel
+from typing import List, Optional
 
-class LoadRequest(BaseModel):
-    current_location: str         # Example: "Miami, FL"
-    pickup_location: str          # Example: "Orlando, FL"
-    dropoff_location: str         # Example: "Atlanta, GA"
-    truck_mpg: float              # Example: 6.5
-    broker_offer: float           # Example: 1400.00
-    load_type: str                # Example: "Dry Van"
+class LoadCalculationRequest(BaseModel):
+    current_lat: float
+    current_lng: float
+    pickup_location: str
+    dropoff_location: str
+    truck_mpg: float
+    load_weight: float
+    load_miles: float
+    deadhead_miles: float
+    load_type: str
+    broker_offer: float
+    previous_offers: Optional[List[float]] = []

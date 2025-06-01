@@ -1,0 +1,17 @@
+{
+  "Reefer": {
+    "Los Angeles, CA to Dallas, TX": 2915,
+    "Chicago, IL to Atlanta, GA": 2120,
+    "New York, NY to Miami, FL": 2390
+  },
+  "Flatbed": {
+    "Los Angeles, CA to Dallas, TX": 2750,
+    "Chicago, IL to Atlanta, GA": 1980,
+    "New York, NY to Miami, FL": 2225
+  },
+  "Dry Van": {
+    "Los Angeles, CA to Dallas, TX": 2560,
+    "Chicago, IL to Atlanta, GA": 1830,
+    "New York, NY to Miami, FL": 2080
+  }
+}

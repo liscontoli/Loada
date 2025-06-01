@@ -1,8 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-from config import AWS_REGION, COGNITO_CLIENT_ID
-from services.user_service import create_user
-
+from config import COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, AWS_REGION
 
 client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
@@ -17,33 +15,31 @@ def sign_up_user(email: str, password: str, name: str):
                 {"Name": "name", "Value": name}
             ]
         )
-
-        # Save user in DynamoDB
-        create_user(email=email, name=name)
-
-        return {"message": "User registered. Please check your email to confirm."}
+        return {"message": "Signup successful. Please confirm the code sent to your email."}
     except ClientError as e:
         return {"error": str(e)}
 
-
+def confirm_user_signup(email: str, code: str):
+    try:
+        response = client.confirm_sign_up(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email,
+            ConfirmationCode=code
+        )
+        return {"message": "User confirmed successfully"}
+    except ClientError as e:
+        return {"error": str(e)}
 
 def login_user(email: str, password: str):
     try:
         response = client.initiate_auth(
+            ClientId=COGNITO_CLIENT_ID,
             AuthFlow="USER_PASSWORD_AUTH",
             AuthParameters={
                 "USERNAME": email,
                 "PASSWORD": password
-            },
-            ClientId=COGNITO_CLIENT_ID
+            }
         )
-        return {
-            "access_token": response["AuthenticationResult"]["AccessToken"],
-            "id_token": response["AuthenticationResult"]["IdToken"],
-            "refresh_token": response["AuthenticationResult"]["RefreshToken"],
-            "expires_in": response["AuthenticationResult"]["ExpiresIn"],
-            "token_type": response["AuthenticationResult"]["TokenType"]
-        }
+        return {"token": response["AuthenticationResult"]["IdToken"]}
     except ClientError as e:
         return {"error": str(e)}
-

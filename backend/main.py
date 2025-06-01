@@ -1,18 +1,22 @@
 from fastapi import FastAPI
-from routers import auth, password_recovery, user, load
-from routers import negotiation
-from routers import history
+from fastapi.middleware.cors import CORSMiddleware
+from routers import auth, user, load, negotiation, history, password_recovery
 
-app = FastAPI()
+app = FastAPI(title="Loada API")
 
-# Register routers
+# CORS middleware for local/frontend dev
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routers
 app.include_router(auth.router)
-app.include_router(password_recovery.router)
 app.include_router(user.router)
 app.include_router(load.router)
 app.include_router(negotiation.router)
 app.include_router(history.router)
-
-@app.get("/")
-def root():
-    return {"message": "Loada backend is running"}
+app.include_router(password_recovery.router)
