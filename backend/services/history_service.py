@@ -1,25 +1,13 @@
-import boto3
-from boto3.dynamodb.conditions import Key
-from decimal import Decimal
+from models.history import get_history_by_user
+from schemas.load_schema import LoadHistoryResponse
+from fastapi import HTTPException
 from typing import List
-from config import AWS_REGION, DYNAMODB_HISTORY_TABLE
 
-# Use the region and table name from config
-dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
-
-def get_user_history(user_id: str) -> List[dict]:
-    table = dynamodb.Table(DYNAMODB_HISTORY_TABLE)
-
-    response = table.query(
-        KeyConditionExpression=Key("user_id").eq(user_id)
-    )
-
-    items = response.get("Items", [])
-
-    # Convert Decimals to floats for JSON serialization
-    for item in items:
-        for key, value in item.items():
-            if isinstance(value, Decimal):
-                item[key] = float(value)
-
-    return items
+def get_user_history(user_id: str) -> List[LoadHistoryResponse]:
+    try:
+        records = get_history_by_user(user_id)
+        response = [LoadHistoryResponse(**record) for record in records]
+        return response
+    except Exception as e:
+        print(f"❌ Error fetching history for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve load history.")

@@ -4,8 +4,10 @@ from datetime import datetime
 from uuid import uuid4
 import boto3
 from config import DYNAMODB_HISTORY_TABLE, AWS_REGION
+from boto3.dynamodb.conditions import Key
 
-dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+# Setup DynamoDB
+dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
 table = dynamodb.Table(DYNAMODB_HISTORY_TABLE)
 
 class HistoryEntry(BaseModel):
@@ -39,3 +41,9 @@ def save_history_entry(user_id: str, data: dict):
     )
     table.put_item(Item=entry.dict())
     return entry
+
+def get_history_by_user(user_id: str):
+    response = table.query(
+        KeyConditionExpression=Key("user_id").eq(user_id)
+    )
+    return response.get("Items", [])

@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, user, load, negotiation, history, password_recovery
 
-app = FastAPI(title="Loada API")
+app = FastAPI(title="Loada Backend")
 
-# CORS middleware for local/frontend dev
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

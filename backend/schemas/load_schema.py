@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 
 class LoadCalculationRequest(BaseModel):
     current_lat: float
@@ -12,4 +12,15 @@ class LoadCalculationRequest(BaseModel):
     deadhead_miles: float
     load_type: str
     broker_offer: float
-    previous_offers: Optional[List[float]] = []
+    previous_offers: List[float] = []
+
+class LoadHistoryResponse(BaseModel):
+    pickup: str
+    dropoff: str
+    load_type: str
+    weight: float
+    total_miles: float
+    fuel_cost: float
+    broker_offer: float
+    market_rate: float
+    counter_offer: float

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from dependencies.auth import verify_token
+from dependencies.auth import get_current_user
 from services.user_service import get_user as get_user_by_email
 from pydantic import BaseModel
 from services.user_service import update_user_name
@@ -7,7 +7,7 @@ from services.user_service import update_user_name
 router = APIRouter(prefix="/user", tags=["User"])
 
 @router.get("/profile")
-def get_profile(claims: dict = Depends(verify_token)):
+def get_profile(claims: dict = Depends(get_current_user)):
     email = claims.get("email")
     user = get_user_by_email(email)
     if user:
@@ -18,7 +18,7 @@ class UserUpdate(BaseModel):
     name: str
 
 @router.put("/profile")
-def update_profile(update: UserUpdate, claims: dict = Depends(verify_token)):
+def update_profile(update: UserUpdate, claims: dict = Depends(get_current_user)):
     email = claims.get("email")
     update_user_name(email, update.name)
     return {"message": "User profile updated successfully ✅"}

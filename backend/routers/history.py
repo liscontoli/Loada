@@ -1,11 +1,16 @@
 from fastapi import APIRouter, Depends
-from dependencies.auth import verify_token
+from fastapi.security import OAuth2PasswordBearer
+from dependencies.auth import get_current_user
+from schemas.load_schema import LoadHistoryResponse
 from services.history_service import get_user_history
-from schemas.history_schema import HistoryResponse
+from typing import List
 
-router = APIRouter(prefix="/history", tags=["History"])
+router = APIRouter(prefix="/load",tags=["Load History"])
 
-@router.get("/", response_model=list[HistoryResponse])
-def fetch_history(claims: dict = Depends(verify_token)):
-    user_id = claims.get("sub")  # Cognito user ID
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+@router.get("/history", response_model=List[LoadHistoryResponse])
+def fetch_user_history(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["sub"]
     return get_user_history(user_id)
