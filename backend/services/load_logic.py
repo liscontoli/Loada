@@ -1,96 +1,89 @@
-import os
-from decimal import Decimal
-from models.history import save_history_entry
+import math
 from utils.fuel_price import get_fuel_price_by_state
-from utils.location_utils import get_state_from_coordinates
-from utils.miles import get_deadhead_miles, get_load_miles
-from utils.market_rate import get_mock_market_rate
 from services.negotiation_ai import negotiate_load
-from utils.type_utils import convert_floats_to_decimal
+from utils.location_utils import get_state_from_coordinates
+from fastapi import HTTPException
+import logging
 
-def calculate_load_costs(data: dict, user_id: str):
+DEFAULT_DIESEL_PRICE = 4.15  # fallback price if fuel API fails
+
+def calculate_load_costs(data: dict, user_id: str) -> dict:
     try:
-        # Validate required fields
-        required_fields = [
-            "current_lat", "current_lng", "pickup_location", "dropoff_location",
-            "truck_mpg", "load_weight", "load_miles", "deadhead_miles",
-            "load_type", "broker_offer"
-        ]
-        for field in required_fields:
-            if field not in data:
-                return {"error": f"'{field}' is missing from request."}
+        print(f"📦 Incoming payload: {data}")
 
-        # Extract and convert input
-        current_lat = float(data["current_lat"])
-        current_lng = float(data["current_lng"])
-        pickup = data["pickup_location"]
-        dropoff = data["dropoff_location"]
-        mpg = float(data["truck_mpg"])
-        weight = float(data["load_weight"])
-        load_miles = float(data["load_miles"])
-        deadhead_miles = float(data["deadhead_miles"])
-        total_miles = round(load_miles + deadhead_miles, 2)
-        load_type = data.get("load_type", "dry van")
-        broker_offer = float(data["broker_offer"])
+        # Extract data
+        current_lat = data["current_lat"]
+        current_lng = data["current_lng"]
+        pickup_location = data["pickup_location"]
+        dropoff_location = data["dropoff_location"]
+        truck_mpg = data["truck_mpg"]
+        load_weight = data["load_weight"]
+        load_miles = data["load_miles"]
+        deadhead_miles = data["deadhead_miles"]
+        load_type = data["load_type"]
+        broker_offer = data["broker_offer"]
         previous_offers = data.get("previous_offers", [])
 
-        # Step 1: Get state from coordinates
-        state = get_state_from_coordinates(current_lat, current_lng)
+        # Total miles
+        total_miles = load_miles + deadhead_miles
 
-        # Step 2: Get diesel price for state with fallback
+        # Get current state for fuel price lookup
         try:
-            diesel_price = get_fuel_price_by_state(state)
+            state_abbr = get_state_from_coordinates(current_lat, current_lng)
         except Exception as e:
-            print(f"Error fetching fuel price for state {state}: {e}")
-            diesel_price = 4.5  # fallback mock value
+            logging.warning(f"⚠️ Could not extract state from coordinates: {e}")
+            state_abbr = "US"
 
-        # Step 3: Calculate fuel cost
-        fuel_cost = round((total_miles / mpg) * diesel_price, 2)
+        # Fetch fuel price
+        diesel_price = get_fuel_price_by_state(state_abbr)
+        if diesel_price == 0.0:
+            diesel_price = DEFAULT_DIESEL_PRICE
+            logging.warning("⚠️ Using default diesel price.")
 
-        # Step 4: Get market rate (mocked)
-        market_rate = get_mock_market_rate(load_type, pickup, dropoff)
+        # Fuel cost calculation
+        gallons_needed = total_miles / truck_mpg
+        estimated_fuel_cost = round(gallons_needed * diesel_price, 2)
 
-        # Step 5: AI negotiation logic
-        ai = negotiate_load(
-            pickup_location=pickup,
-            dropoff_location=dropoff,
-            load_type=load_type,
-            weight=weight,
-            distance=total_miles,
+        # Offer per mile
+        offer_per_mile = round(broker_offer / total_miles, 2)
+
+        # Simulated market rate (TODO: plug in real API or model later)
+        market_rate = 2.05  # USD/mile
+        market_total = round(market_rate * total_miles, 2)
+
+        # Profitability
+        net_profit = broker_offer - estimated_fuel_cost
+        is_profitable = net_profit > 0
+        offer_comparison = "Above Market" if offer_per_mile > market_rate else "Below Market"
+
+        # AI negotiation advice
+        ai_result = negotiate_load(
             broker_offer=broker_offer,
+            market_rate=market_rate,
             previous_offers=previous_offers
         )
 
-        # Step 6: Save load to history
-        save_history_entry(
-            user_id,
-            convert_floats_to_decimal({
-                "pickup": pickup,
-                "dropoff": dropoff,
-                "load_type": load_type,
-                "weight": weight,
-                "total_miles": total_miles,
-                "fuel_cost": fuel_cost,
-                "broker_offer": broker_offer,
-                "market_rate": market_rate,
-                "counter_offer": ai["suggested_counter_offer"]
-            })
-        )
-
-        # Step 7: Return full response
-        response = {
-            "state": state,
-            "diesel_price": diesel_price,
-            "fuel_cost": fuel_cost,
+        result = {
             "total_miles": total_miles,
-            "market_rate": market_rate,
-            "analysis": ai["analysis"],
-            "suggested_counter_offer": ai["suggested_counter_offer"],
-            "ai_reply": ai["ai_reply"]
+            "estimated_fuel_cost": estimated_fuel_cost,
+            "offer_per_mile": offer_per_mile,
+            "market_rate_per_mile": market_rate,
+            "market_total": market_total,
+            "net_profit": net_profit,
+            "is_profitable": is_profitable,
+            "offer_comparison": offer_comparison,
+            "ai_analysis": ai_result["analysis"],
+            "suggested_counter_offer": ai_result["suggested_counter_offer"],
+            "ai_reply": ai_result["ai_reply"]
         }
 
-        return convert_floats_to_decimal(response)
+        print(f"✅ Load analysis result: {result}")
+        return result
+
+    except KeyError as e:
+        logging.error(f"❌ Missing field in request: {e}")
+        raise HTTPException(status_code=400, detail=f"Missing field: {e}")
 
     except Exception as e:
-        print("❌ Error in load logic:", e)
-        return {"error": str(e)}
+        logging.error(f"❌ Error in load logic: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

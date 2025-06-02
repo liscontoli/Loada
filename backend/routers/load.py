@@ -6,17 +6,6 @@ from schemas.load_schema import LoadCalculationRequest
 
 router = APIRouter(prefix="/load", tags=["Load"])
 
-class LoadInput(BaseModel):
-    current_lat: float
-    current_lng: float
-    pickup_location: str
-    dropoff_location: str
-    truck_mpg: float
-    load_weight: float
-    load_miles: float
-    deadhead_miles: float
-    load_type: str
-    broker_offer: float
 
 @router.post("/calculate")
 def calculate_load(
