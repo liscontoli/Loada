@@ -1,6 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 from config import COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, AWS_REGION
+from schemas.user_schema import UserLoginRequest
 
 client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
@@ -30,14 +31,14 @@ def confirm_user_signup(email: str, code: str):
     except ClientError as e:
         return {"error": str(e)}
 
-def login_user(email: str, password: str):
+def login_user(user: UserLoginRequest):
     try:
         response = client.initiate_auth(
             ClientId=COGNITO_CLIENT_ID,
             AuthFlow="USER_PASSWORD_AUTH",
             AuthParameters={
-                "USERNAME": email,
-                "PASSWORD": password
+                "USERNAME": user.email,
+                "PASSWORD": user.password
             }
         )
         return {"token": response["AuthenticationResult"]["IdToken"]}

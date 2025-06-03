@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from services.auth_service import sign_up_user, login_user
+from schemas.user_schema import UserSignupRequest, UserLoginRequest, ConfirmPasswordRequest
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -18,8 +19,8 @@ def signup(user: UserCredentials):
 
 
 @router.post("/login")
-def login(user: UserCredentials):
-    result = login_user(user.email, user.password)
+def login(user: UserLoginRequest):
+    result = login_user(user)
     if "error" in result:
         raise HTTPException(status_code=401, detail=result["error"])
     return result
