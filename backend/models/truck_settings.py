@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import boto3
 from config import DYNAMODB_TRUCK_SETTINGS_TABLE, AWS_REGION
 
@@ -13,7 +13,7 @@ class TruckSettings(BaseModel):
     truck_type: str
     mpg: float
     fuel_type: str
-    created_at: str = datetime.utcnow().isoformat()
+    created_at: str = datetime.now(timezone.utc).isoformat()
 
 def save_truck_settings(data: TruckSettings):
     table.put_item(Item=data.model_dump())
