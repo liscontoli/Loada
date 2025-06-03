@@ -1,29 +1,26 @@
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import List
-from services.negotiation_ai import negotiate_load
+from fastapi import APIRouter, Depends, HTTPException
 from dependencies.auth import get_current_user
+from services.negotiation_ai import negotiate_load
+from schemas.negotiation_schema import NegotiationRequest, NegotiationResponse
 
-router = APIRouter(prefix="/negotiate", tags=["AI Negotiation"])
+router = APIRouter(
+    prefix="/negotiation",
+    tags=["Negotiation"]
+)
 
-class NegotiationRequest(BaseModel):
-    pickup_location: str
-    dropoff_location: str
-    load_type: str
-    weight: float
-    distance: float
-    broker_offer: float
-    previous_offers: List[float]
-
-@router.post("/")
-def negotiate(request: NegotiationRequest, claims: dict = Depends(get_current_user)):
-    result = negotiate_load(
-        pickup_location=request.pickup_location,
-        dropoff_location=request.dropoff_location,
-        load_type=request.load_type,
-        weight=request.weight,
-        distance=request.distance,
-        broker_offer=request.broker_offer,
-        previous_offers=request.previous_offers,
-    )
-    return result
+@router.post("/negotiate", response_model=NegotiationResponse)
+def negotiate(
+    payload: NegotiationRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        result = negotiate_load(
+            broker_offer=payload.broker_offer,
+            market_rate=payload.market_rate,
+            previous_offers=payload.previous_offers,
+            countered_amount=payload.countered_amount
+        )
+        return result
+    except Exception as e:
+        print(f"❌ Negotiation failed: {e}")
+        raise HTTPException(status_code=500, detail="Negotiation AI failed to respond.")
