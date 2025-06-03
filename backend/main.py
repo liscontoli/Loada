@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, user, load, negotiation, history, password_recovery
+from routers import auth, user, load, negotiation, history, password_recovery, truck_settings
 
 app = FastAPI(title="Loada Backend")
 
@@ -20,3 +20,4 @@ app.include_router(load.router)
 app.include_router(negotiation.router)
 app.include_router(history.router)
 app.include_router(password_recovery.router)
+app.include_router(truck_settings.router)
