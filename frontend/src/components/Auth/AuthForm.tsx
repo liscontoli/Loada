@@ -44,7 +44,7 @@ export default function AuthForm() {
 
         {/* Form */}
         <div className="w-full flex justify-center">
-          <div className="w-[417px] space-y-[42px]">
+          <div className="w-[417px] space-y-[20px]">
             {isSignIn ? <SignInForm /> : <SignUpForm />}
           </div>
         </div>

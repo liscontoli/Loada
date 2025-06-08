@@ -11,26 +11,26 @@ export default function SignUpForm() {
     <>
       {/* Email Field */}
       <div className="pb-[0px]">
-        <label className="block text-[16px] font-poppins text-[#677363] leading-tight">
+        <label className="block text-[18px] font-poppins text-[#677363] leading-tight">
           Email address
         </label>
         <input
           type="email"
           placeholder="Enter email"
-          className="w-[420px] h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 font-poppins text-[13px]"
+          className="w-[420px] h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 font-poppins text-[16px]"
         />
       </div>
 
       {/* Password Field */}
       <div className="pb-[0px]">
-        <label className="block text-[16px] font-poppins text-[#677363] leading-tight">
+        <label className="block text-[18px] font-poppins text-[#677363] leading-tight">
           Password
         </label>
         <div className="relative w-[420px]">
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Enter password"
-            className="w-full h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 pr-10 font-poppins text-[13px]"
+            className="w-full h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 pr-10 font-poppins text-[16px]"
           />
           <img
             src={showPassword ? EyeOff : Eye}
@@ -43,14 +43,14 @@ export default function SignUpForm() {
 
       {/* Confirm Password Field */}
       <div className="pb-[0px]">
-        <label className="block text-[16px] font-poppins text-[#677363] leading-tight">
+        <label className="block text-[18px] font-poppins text-[#677363] leading-tight">
           Confirm Password
         </label>
         <div className="relative w-[420px]">
           <input
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Re-enter password"
-            className="w-full h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 pr-10 font-poppins text-[13px]"
+            className="w-full h-[38px] border-2 border-[#D3D8D0] rounded-[5px] px-3 pr-10 font-poppins text-[16px]"
           />
           <img
             src={showConfirmPassword ? EyeOff : Eye}
@@ -62,7 +62,7 @@ export default function SignUpForm() {
       </div>
 
       {/* Sign Up Button */}
-      <div className="flex justify-center pt-[0px]">
+      <div className="flex justify-center pt-[10px]">
         <img
           src={SignUpButton}
           alt="Sign Up"

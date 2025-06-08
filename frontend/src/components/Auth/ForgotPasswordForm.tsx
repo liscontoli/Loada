@@ -14,7 +14,7 @@ export default function ForgotPasswordForm() {
         <img
           src={BackArrow}
           alt="Back"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/auth")}
           className="absolute left-[32px] top-1/2 transform -translate-y-1/2 w-[30px] h-[30px] cursor-pointer"
         />
 
@@ -32,7 +32,7 @@ export default function ForgotPasswordForm() {
 
         {/* Email Input */}
         <div className="w-[417px] mb-8">
-          <label className="block text-[18px] font-poppins text-left text-[#8EA29D] mb-2">
+          <label className="block text-[18px] font-poppins text-left text-[#8EA29D] mb-7">
             Email address
           </label>
           <input
@@ -43,7 +43,7 @@ export default function ForgotPasswordForm() {
         </div>
 
         {/* Send Link Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-6">
           <img
             src={LinkToReset}
             alt="Send Link to Reset Password"
