@@ -1,23 +1,14 @@
-/*export default function App() {
-  return <div style={{ background: 'green', height: '100vh' }}>TEST WORKS ✅</div>;
-}*/
+import { Routes, Route } from "react-router-dom";
+import SplashScreen from "./pages/SplashScreen";
+import AuthForm from "./components/Auth/AuthForm";
+import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm";
 
-import { useEffect, useState } from 'react';
-import SplashScreen from './components/SplashScreen';
-import AuthPage from './components/pages/AuthPage';
-
-function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2500); // 2.5 seconds for splash screen
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  return showSplash ? <SplashScreen /> : <AuthPage />;
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<SplashScreen />} />
+      <Route path="/auth" element={<AuthForm />} />
+      <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+    </Routes>
+  );
 }
-
-export default App;
