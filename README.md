@@ -13,9 +13,6 @@ Loada.ai is an intelligent, serverless web application that empowers truckers an
   <img src="Screenshots/Loada_SplashScreen.png" alt="Splash Screen" width="500">
 </p>
 <p align="center">
-  <img src="Screenshots/Loada_Auth.png" alt="Auth Screen" width="500">
-</p>
-<p align="center">
   <img src="Screenshots/Loada_Auth2.png" alt="Auth Screen 2" width="500">
 </p>
 <p align="center">
@@ -25,13 +22,13 @@ Loada.ai is an intelligent, serverless web application that empowers truckers an
   <img src="Screenshots/Loada_LoadEntry.png" alt="Load Entry Screen" width="500">
 </p>
 <p align="center">
+  <img src="Screenshots/Loada_Settings.png" alt="App Settings" width="500">
+</p>
+<p align="center">
   <img src="Screenshots/Loada_PersonalSettings.png" alt="Personal Settings" width="500">
 </p>
 <p align="center">
   <img src="Screenshots/Loada_TruckSettings.png" alt="Truck Settings" width="500">
-</p>
-<p align="center">
-  <img src="Screenshots/Loada_Settings.png" alt="App Settings" width="500">
 </p>
 <p align="center">
   <img src="Screenshots/Loada_AIChat.png" alt="AI Chat Negotiator" width="500">
